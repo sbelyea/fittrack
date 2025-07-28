@@ -1,0 +1,25 @@
+{
+  "name": "fittrack",
+  "version": "1.0.0",
+  "description": "A personal fitness tracking application focused on weightlifting goals and progress monitoring.",
+  "main": "app.py",
+  "scripts": {
+    "dev": "python app.py",
+    "start": "python app.py",
+    "install-deps": "pip install -r requirements.txt",
+    "docker:start": "docker-compose up",
+    "docker:start:bg": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:build": "docker-compose up --build",
+    "docker:fresh": "docker-compose down -v && docker-compose up"
+  },
+  "keywords": [
+    "fitness",
+    "tracking",
+    "weightlifting",
+    "flask",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC"
+}

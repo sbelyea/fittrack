@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: fittrack_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: fittrack_root_password
+      MYSQL_DATABASE: fittrack
+      MYSQL_USER: fittrack_user
+      MYSQL_PASSWORD: fittrack_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - fittrack_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Flask Web Application
+  web:
+    build: .
+    container_name: fittrack_web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=your-super-secret-key-change-this-in-production
+      - DATABASE_URL=mysql+pymysql://fittrack_user:fittrack_password@mysql:3306/fittrack
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=fittrack_user
+      - MYSQL_PASSWORD=fittrack_password
+      - MYSQL_DATABASE=fittrack
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - fittrack_network
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  mysql_data:
+
+networks:
+  fittrack_network:
+    driver: bridge

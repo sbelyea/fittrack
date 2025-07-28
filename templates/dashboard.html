@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FitTrack{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Your Dashboard</h1>
+        <p>Welcome back, {{ user.username }}!</p>
+    </div>
+
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Total Workouts</h3>
+            <div class="stat-number">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>This Week</h3>
+            <div class="stat-number">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Goals Achieved</h3>
+            <div class="stat-number">0</div>
+        </div>
+    </div>
+
+    <div class="dashboard-actions">
+        <button class="btn btn-primary">Log Workout</button>
+        <button class="btn btn-secondary">Set Goal</button>
+        <button class="btn btn-secondary">View History</button>
+    </div>
+
+    <div class="recent-activity">
+        <h3>Recent Activity</h3>
+        <div class="activity-list">
+            <p class="empty-state">No recent activity. Start by logging your first workout!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
