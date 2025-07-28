@@ -12,11 +12,11 @@
     <div class="dashboard-stats">
         <div class="stat-card">
             <h3>Total Workouts</h3>
-            <div class="stat-number">0</div>
+            <div class="stat-number">{{ total_workouts }}</div>
         </div>
         <div class="stat-card">
             <h3>This Week</h3>
-            <div class="stat-number">0</div>
+            <div class="stat-number">{{ recent_workouts|length }}</div>
         </div>
         <div class="stat-card">
             <h3>Goals Achieved</h3>
@@ -25,16 +25,42 @@
     </div>
 
     <div class="dashboard-actions">
-        <button class="btn btn-primary">Log Workout</button>
+        <a href="{{ url_for('new_workout') }}" class="btn btn-primary">Log Workout</a>
+        <a href="{{ url_for('workout_list') }}" class="btn btn-secondary">View All Workouts</a>
         <button class="btn btn-secondary">Set Goal</button>
-        <button class="btn btn-secondary">View History</button>
     </div>
 
     <div class="recent-activity">
-        <h3>Recent Activity</h3>
-        <div class="activity-list">
-            <p class="empty-state">No recent activity. Start by logging your first workout!</p>
-        </div>
+        <h3>Recent Workouts</h3>
+        {% if recent_workouts %}
+            <div class="activity-list">
+                {% for workout in recent_workouts %}
+                <div class="activity-item">
+                    <div class="activity-info">
+                        <strong>{{ workout.classification|title }}</strong>
+                        <span class="activity-date">{{ workout.workout_date.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    <div class="activity-details">
+                        {{ workout.exercises|length }} exercises
+                        {% if workout.exercises %}
+                            • {{ workout.exercises|sum(attribute='sets') }} sets total
+                        {% endif %}
+                    </div>
+                    <div class="activity-actions">
+                        <a href="{{ url_for('view_workout', workout_id=workout.id) }}" class="btn btn-small btn-secondary">View</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="view-all">
+                <a href="{{ url_for('workout_list') }}" class="btn btn-secondary">View All Workouts</a>
+            </div>
+        {% else %}
+            <div class="activity-list">
+                <p class="empty-state">No workouts logged yet. Start by logging your first workout!</p>
+                <a href="{{ url_for('new_workout') }}" class="btn btn-primary">Log Your First Workout</a>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

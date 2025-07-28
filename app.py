@@ -33,6 +33,38 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+# Workout model
+class Workout(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    classification = db.Column(db.String(100), nullable=False)  # e.g., 'weightlifting', 'cardio', 'flexibility'
+    workout_date = db.Column(db.Date, nullable=False)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    
+    # Relationship to exercises
+    exercises = db.relationship('Exercise', backref='workout', lazy=True, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Workout {self.classification} on {self.workout_date}>'
+
+# Exercise model (individual exercises within a workout)
+class Exercise(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    workout_id = db.Column(db.Integer, db.ForeignKey('workout.id'), nullable=False)
+    exercise_name = db.Column(db.String(100), nullable=False)  # e.g., 'squats', 'bench press'
+    sets = db.Column(db.Integer, nullable=False)
+    reps = db.Column(db.Integer, nullable=False)
+    weight = db.Column(db.Float)  # weight in pounds or kg
+    weight_unit = db.Column(db.String(10), default='lbs')  # 'lbs' or 'kg'
+    rest_time = db.Column(db.Integer)  # rest time in seconds
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+    def __repr__(self):
+        return f'<Exercise {self.exercise_name}: {self.sets}x{self.reps} @ {self.weight}{self.weight_unit}>'
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -106,7 +138,120 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', user=current_user)
+    # Get recent workouts for the dashboard
+    recent_workouts = Workout.query.filter_by(user_id=current_user.id)\
+                            .order_by(Workout.workout_date.desc())\
+                            .limit(5).all()
+    
+    # Get workout stats
+    total_workouts = Workout.query.filter_by(user_id=current_user.id).count()
+    
+    return render_template('dashboard.html', 
+                         user=current_user, 
+                         recent_workouts=recent_workouts,
+                         total_workouts=total_workouts)
+
+# Workout routes
+@app.route('/workouts')
+@login_required
+def workout_list():
+    """Display all workouts for the current user"""
+    workouts = Workout.query.filter_by(user_id=current_user.id)\
+                           .order_by(Workout.workout_date.desc())\
+                           .all()
+    return render_template('workouts/list.html', workouts=workouts)
+
+@app.route('/workouts/new', methods=['GET', 'POST'])
+@login_required
+def new_workout():
+    """Create a new workout"""
+    if request.method == 'POST':
+        # Create new workout
+        workout = Workout(
+            user_id=current_user.id,
+            classification=request.form['classification'],
+            workout_date=request.form['workout_date'],
+            notes=request.form.get('notes', '')
+        )
+        db.session.add(workout)
+        db.session.flush()  # Get the workout ID
+        
+        # Add exercises
+        exercise_count = 0
+        while f'exercise_name_{exercise_count}' in request.form:
+            if request.form[f'exercise_name_{exercise_count}'].strip():
+                exercise = Exercise(
+                    workout_id=workout.id,
+                    exercise_name=request.form[f'exercise_name_{exercise_count}'],
+                    sets=int(request.form[f'sets_{exercise_count}']),
+                    reps=int(request.form[f'reps_{exercise_count}']),
+                    weight=float(request.form[f'weight_{exercise_count}']) if request.form[f'weight_{exercise_count}'] else None,
+                    weight_unit=request.form[f'weight_unit_{exercise_count}'],
+                    notes=request.form.get(f'exercise_notes_{exercise_count}', '')
+                )
+                db.session.add(exercise)
+            exercise_count += 1
+        
+        db.session.commit()
+        flash('Workout logged successfully!')
+        return redirect(url_for('workout_list'))
+    
+    return render_template('workouts/new.html')
+
+@app.route('/workouts/<int:workout_id>')
+@login_required
+def view_workout(workout_id):
+    """View a specific workout"""
+    workout = Workout.query.filter_by(id=workout_id, user_id=current_user.id).first_or_404()
+    return render_template('workouts/view.html', workout=workout)
+
+@app.route('/workouts/<int:workout_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_workout(workout_id):
+    """Edit an existing workout"""
+    workout = Workout.query.filter_by(id=workout_id, user_id=current_user.id).first_or_404()
+    
+    if request.method == 'POST':
+        # Update workout
+        workout.classification = request.form['classification']
+        workout.workout_date = request.form['workout_date']
+        workout.notes = request.form.get('notes', '')
+        
+        # Delete existing exercises
+        for exercise in workout.exercises:
+            db.session.delete(exercise)
+        
+        # Add updated exercises
+        exercise_count = 0
+        while f'exercise_name_{exercise_count}' in request.form:
+            if request.form[f'exercise_name_{exercise_count}'].strip():
+                exercise = Exercise(
+                    workout_id=workout.id,
+                    exercise_name=request.form[f'exercise_name_{exercise_count}'],
+                    sets=int(request.form[f'sets_{exercise_count}']),
+                    reps=int(request.form[f'reps_{exercise_count}']),
+                    weight=float(request.form[f'weight_{exercise_count}']) if request.form[f'weight_{exercise_count}'] else None,
+                    weight_unit=request.form[f'weight_unit_{exercise_count}'],
+                    notes=request.form.get(f'exercise_notes_{exercise_count}', '')
+                )
+                db.session.add(exercise)
+            exercise_count += 1
+        
+        db.session.commit()
+        flash('Workout updated successfully!')
+        return redirect(url_for('view_workout', workout_id=workout.id))
+    
+    return render_template('workouts/edit.html', workout=workout)
+
+@app.route('/workouts/<int:workout_id>/delete', methods=['POST'])
+@login_required
+def delete_workout(workout_id):
+    """Delete a workout"""
+    workout = Workout.query.filter_by(id=workout_id, user_id=current_user.id).first_or_404()
+    db.session.delete(workout)
+    db.session.commit()
+    flash('Workout deleted successfully!')
+    return redirect(url_for('workout_list'))
 
 # API endpoints
 @app.route('/api/user')

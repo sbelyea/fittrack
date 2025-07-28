@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ workout.classification|title }} Workout - FitTrack{% endblock %}
+
+{% block content %}
+<div class="workout-container">
+    <div class="workout-header">
+        <h1>{{ workout.classification|title }} Workout</h1>
+        <div class="workout-actions">
+            <a href="{{ url_for('workout_list') }}" class="btn btn-secondary">← Back to Workouts</a>
+            <a href="{{ url_for('edit_workout', workout_id=workout.id) }}" class="btn btn-primary">Edit Workout</a>
+        </div>
+    </div>
+
+    <div class="workout-details-view">
+        <div class="workout-info">
+            <div class="info-item">
+                <label>Date:</label>
+                <span>{{ workout.workout_date.strftime('%A, %B %d, %Y') }}</span>
+            </div>
+            <div class="info-item">
+                <label>Classification:</label>
+                <span>{{ workout.classification|title }}</span>
+            </div>
+            {% if workout.notes %}
+            <div class="info-item">
+                <label>Notes:</label>
+                <span>{{ workout.notes }}</span>
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <label>Logged:</label>
+                <span>{{ workout.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+            </div>
+        </div>
+
+        <div class="exercises-view">
+            <h3>Exercises ({{ workout.exercises|length }})</h3>
+            {% if workout.exercises %}
+                <div class="exercises-list">
+                    {% for exercise in workout.exercises %}
+                    <div class="exercise-card">
+                        <div class="exercise-header">
+                            <h4>{{ exercise.exercise_name|title }}</h4>
+                        </div>
+                        <div class="exercise-details">
+                            <div class="exercise-stats">
+                                <div class="stat-item">
+                                    <label>Sets:</label>
+                                    <span>{{ exercise.sets }}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <label>Reps:</label>
+                                    <span>{{ exercise.reps }}</span>
+                                </div>
+                                {% if exercise.weight %}
+                                <div class="stat-item">
+                                    <label>Weight:</label>
+                                    <span>{{ exercise.weight }} {{ exercise.weight_unit }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% if exercise.notes %}
+                            <div class="exercise-notes">
+                                <label>Notes:</label>
+                                <span>{{ exercise.notes }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="workout-summary">
+                    <h4>Workout Summary</h4>
+                    {% set total_sets = workout.exercises|sum(attribute='sets') %}
+                    {% set total_reps = workout.exercises|map(attribute='sets')|list|zip(workout.exercises|map(attribute='reps')|list)|map('sum')|sum %}
+                    <div class="summary-stats">
+                        <div class="summary-item">
+                            <strong>{{ workout.exercises|length }}</strong> exercises
+                        </div>
+                        <div class="summary-item">
+                            <strong>{{ total_sets }}</strong> total sets
+                        </div>
+                        <div class="summary-item">
+                            <strong>{{ total_reps }}</strong> total reps
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <p>No exercises recorded for this workout.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="workout-actions-bottom">
+        <a href="{{ url_for('edit_workout', workout_id=workout.id) }}" class="btn btn-primary">Edit Workout</a>
+        <form method="POST" action="{{ url_for('delete_workout', workout_id=workout.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this workout? This action cannot be undone.')">
+            <button type="submit" class="btn btn-danger">Delete Workout</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

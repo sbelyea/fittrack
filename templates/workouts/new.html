@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Log New Workout - FitTrack{% endblock %}
+
+{% block content %}
+<div class="workout-container">
+    <div class="workout-header">
+        <h1>Log New Workout</h1>
+        <a href="{{ url_for('workout_list') }}" class="btn btn-secondary">← Back to Workouts</a>
+    </div>
+
+    <form method="POST" id="workoutForm" class="workout-form">
+        <div class="workout-details">
+            <div class="form-group">
+                <label for="classification">Classification</label>
+                <select id="classification" name="classification" required>
+                    <option value="">Select classification...</option>
+                    <option value="weightlifting">Weightlifting</option>
+                    <option value="cardio">Cardio</option>
+                    <option value="flexibility">Flexibility</option>
+                    <option value="sports">Sports</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="workout_date">Workout Date</label>
+                <input type="date" id="workout_date" name="workout_date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Workout Notes (Optional)</label>
+                <textarea id="notes" name="notes" placeholder="How did the workout feel? Any observations..."></textarea>
+            </div>
+        </div>
+
+        <div class="exercises-section">
+            <h3>Exercises</h3>
+            <div id="exercises-container">
+                <div class="exercise-entry" data-index="0">
+                    <div class="exercise-header">
+                        <h4>Exercise 1</h4>
+                        <button type="button" class="btn btn-danger btn-small remove-exercise">Remove</button>
+                    </div>
+                    <div class="exercise-grid">
+                        <div class="form-group">
+                            <label>Exercise Name</label>
+                            <input type="text" name="exercise_name_0" placeholder="e.g., Squats, Bench Press" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sets</label>
+                            <input type="number" name="sets_0" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Reps</label>
+                            <input type="number" name="reps_0" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Weight</label>
+                            <input type="number" name="weight_0" step="0.5" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <select name="weight_unit_0">
+                                <option value="lbs">lbs</option>
+                                <option value="kg">kg</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Exercise Notes (Optional)</label>
+                            <input type="text" name="exercise_notes_0" placeholder="Form notes, difficulty, etc.">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-exercise" class="btn btn-secondary">+ Add Another Exercise</button>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Log Workout</button>
+            <a href="{{ url_for('workout_list') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default
+    document.getElementById('workout_date').valueAsDate = new Date();
+    
+    let exerciseCount = 1;
+    
+    // Add exercise functionality
+    document.getElementById('add-exercise').addEventListener('click', function() {
+        const container = document.getElementById('exercises-container');
+        const exerciseEntry = document.createElement('div');
+        exerciseEntry.className = 'exercise-entry';
+        exerciseEntry.setAttribute('data-index', exerciseCount);
+        
+        exerciseEntry.innerHTML = `
+            <div class="exercise-header">
+                <h4>Exercise ${exerciseCount + 1}</h4>
+                <button type="button" class="btn btn-danger btn-small remove-exercise">Remove</button>
+            </div>
+            <div class="exercise-grid">
+                <div class="form-group">
+                    <label>Exercise Name</label>
+                    <input type="text" name="exercise_name_${exerciseCount}" placeholder="e.g., Squats, Bench Press" required>
+                </div>
+                <div class="form-group">
+                    <label>Sets</label>
+                    <input type="number" name="sets_${exerciseCount}" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Reps</label>
+                    <input type="number" name="reps_${exerciseCount}" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Weight</label>
+                    <input type="number" name="weight_${exerciseCount}" step="0.5" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>Unit</label>
+                    <select name="weight_unit_${exerciseCount}">
+                        <option value="lbs">lbs</option>
+                        <option value="kg">kg</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Exercise Notes (Optional)</label>
+                    <input type="text" name="exercise_notes_${exerciseCount}" placeholder="Form notes, difficulty, etc.">
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(exerciseEntry);
+        exerciseCount++;
+    });
+    
+    // Remove exercise functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-exercise')) {
+            const exerciseEntry = e.target.closest('.exercise-entry');
+            if (document.querySelectorAll('.exercise-entry').length > 1) {
+                exerciseEntry.remove();
+                updateExerciseNumbers();
+            } else {
+                alert('You must have at least one exercise in your workout.');
+            }
+        }
+    });
+    
+    function updateExerciseNumbers() {
+        const exercises = document.querySelectorAll('.exercise-entry');
+        exercises.forEach((exercise, index) => {
+            exercise.querySelector('h4').textContent = `Exercise ${index + 1}`;
+        });
+    }
+});
+</script>
+{% endblock %}
