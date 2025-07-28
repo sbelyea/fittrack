@@ -138,18 +138,41 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Get recent workouts for the dashboard
-    recent_workouts = Workout.query.filter_by(user_id=current_user.id)\
-                            .order_by(Workout.workout_date.desc())\
-                            .limit(5).all()
-    
-    # Get workout stats
-    total_workouts = Workout.query.filter_by(user_id=current_user.id).count()
-    
-    return render_template('dashboard.html', 
-                         user=current_user, 
-                         recent_workouts=recent_workouts,
-                         total_workouts=total_workouts)
+    try:
+        # Get recent workouts for the dashboard with exercises eagerly loaded
+        from sqlalchemy.orm import joinedload
+        recent_workouts = db.session.query(Workout)\
+                                   .options(joinedload(Workout.exercises))\
+                                   .filter(Workout.user_id == current_user.id)\
+                                   .order_by(Workout.workout_date.desc())\
+                                   .limit(5)\
+                                   .all()
+        
+        # Get workout stats
+        total_workouts = db.session.query(Workout)\
+                                  .filter(Workout.user_id == current_user.id)\
+                                  .count()
+        
+        # Debug logging (remove in production)
+        print(f"Dashboard for user {current_user.id}: {total_workouts} total workouts, {len(recent_workouts)} recent")
+        for workout in recent_workouts:
+            print(f"  - {workout.classification} on {workout.workout_date}")
+        
+        return render_template('dashboard.html', 
+                             user=current_user, 
+                             recent_workouts=recent_workouts,
+                             total_workouts=total_workouts)
+    except Exception as e:
+        print(f"Dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
+        # Rollback any failed transactions
+        db.session.rollback()
+        # Return empty dashboard on error
+        return render_template('dashboard.html', 
+                             user=current_user, 
+                             recent_workouts=[],
+                             total_workouts=0)
 
 # Workout routes
 @app.route('/workouts')
