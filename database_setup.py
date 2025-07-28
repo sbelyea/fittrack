@@ -43,12 +43,24 @@ def setup_tables():
     
     try:
         with app.app_context():
-            # Drop existing tables to ensure clean schema (for development)
-            print("Dropping existing tables...")
-            db.drop_all()
+            # Check if tables already exist
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            existing_tables = inspector.get_table_names()
             
-            # Create all tables with current schema
-            print("Creating tables with updated schema...")
+            print(f"Found existing tables: {existing_tables}")
+            
+            if existing_tables:
+                response = input("Tables already exist. Do you want to recreate them? This will DELETE ALL DATA! (y/N): ")
+                if response.lower() != 'y':
+                    print("Skipping table creation. Using existing tables.")
+                    return True
+                
+                print("Dropping existing tables...")
+                db.drop_all()
+            
+            # Create all tables
+            print("Creating database tables...")
             db.create_all()
             print("Database tables created successfully")
             return True

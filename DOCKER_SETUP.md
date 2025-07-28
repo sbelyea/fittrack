@@ -68,9 +68,21 @@ When you ran `docker-compose up`, Docker:
 1. Downloaded a MySQL 8.0 database image
 2. Built your FitTrack application into a container
 3. Created a network so they can talk to each other
-4. Started the MySQL database and waited for it to be ready
-5. Ran a database initialization service to create all tables
-6. Started the web application once everything is ready
+4. Created a persistent volume for your database data
+5. Started the MySQL database and waited for it to be ready
+6. Ran a database initialization service to create tables (only if they don't exist)
+7. Started the web application once everything is ready
+
+## Data Persistence
+
+Your workout data is automatically saved and will persist between container restarts! The MySQL data is stored in a Docker volume, so:
+
+✅ **Your data survives**: `docker-compose down` and `docker-compose up`  
+✅ **Your data survives**: Application updates and rebuilds  
+✅ **Your data survives**: Computer restarts  
+❌ **Your data is lost**: `docker-compose down -v` (removes volumes)
+
+To backup your data, you can export it from the MySQL container or use the web interface to track your progress.
 
 ## Useful Commands
 
@@ -85,10 +97,10 @@ docker-compose up -d
 
 ### Stop the application
 ```bash
-# Stop all containers
+# Stop all containers (keeps your data)
 docker-compose down
 
-# Stop and remove all data (fresh start)
+# Stop and remove all data (fresh start - WARNING: deletes all workouts and users!)
 docker-compose down -v
 ```
 
@@ -209,7 +221,7 @@ fittrack/
 
 If you're stuck:
 1. Check the logs: `docker-compose logs`
-2. Try a fresh start: `docker-compose down -v && docker-compose up`
+2. Try a fresh start (WARNING - deletes all data): `docker-compose down -v && docker-compose up`
 3. Make sure Docker is running: `docker --version`
 4. Check if ports are available: `netstat -an | grep 5000`
 

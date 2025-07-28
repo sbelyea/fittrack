@@ -94,7 +94,7 @@ docker-compose down
 # View logs
 docker-compose logs
 
-# Fresh start (removes all data)
+# Fresh start (WARNING: removes all data!)
 docker-compose down -v && docker-compose up
 ```
 

@@ -32,20 +32,24 @@ def wait_for_db():
     return False
 
 def create_tables():
-    """Create all database tables"""
+    """Create database tables if they don't exist"""
     try:
         with app.app_context():
-            # Check if tables exist and drop them if they do (for development)
-            # This ensures we always have the latest schema
-            print("Checking existing tables...")
+            # Check if tables already exist
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            existing_tables = inspector.get_table_names()
             
-            # Drop all tables first to ensure clean schema
-            db.drop_all()
-            print("Dropped existing tables")
+            print(f"Found existing tables: {existing_tables}")
             
-            # Create all tables with current schema
+            if 'user' in existing_tables and 'workout' in existing_tables and 'exercise' in existing_tables:
+                print("All required tables already exist. Skipping table creation.")
+                return True
+            
+            print("Creating missing database tables...")
+            # Only create tables that don't exist
             db.create_all()
-            print("Database tables created successfully with updated schema!")
+            print("Database tables created successfully!")
             return True
     except Exception as e:
         print(f"Error creating tables: {e}")
