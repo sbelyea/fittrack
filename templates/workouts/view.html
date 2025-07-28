@@ -74,7 +74,10 @@
                 <div class="workout-summary">
                     <h4>Workout Summary</h4>
                     {% set total_sets = workout.exercises|sum(attribute='sets') %}
-                    {% set total_reps = workout.exercises|map(attribute='sets')|list|zip(workout.exercises|map(attribute='reps')|list)|map('sum')|sum %}
+                    {% set total_reps = 0 %}
+                    {% for exercise in workout.exercises %}
+                        {% set total_reps = total_reps + (exercise.sets * exercise.reps) %}
+                    {% endfor %}
                     <div class="summary-stats">
                         <div class="summary-item">
                             <strong>{{ workout.exercises|length }}</strong> exercises
