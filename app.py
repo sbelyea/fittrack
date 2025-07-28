@@ -37,6 +37,16 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Create database tables function (used by init_db.py and for manual setup)
+def create_tables():
+    """Create database tables if they don't exist"""
+    with app.app_context():
+        db.create_all()
+        print("Database tables created successfully!")
+
+# For Docker, tables are created by the db_init service
+# For manual setup, tables are created by database_setup.py or when running directly
+
 # Routes
 @app.route('/')
 def index():

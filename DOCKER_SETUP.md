@@ -68,8 +68,9 @@ When you ran `docker-compose up`, Docker:
 1. Downloaded a MySQL 8.0 database image
 2. Built your FitTrack application into a container
 3. Created a network so they can talk to each other
-4. Started both containers
-5. Set up the database with the correct tables
+4. Started the MySQL database and waited for it to be ready
+5. Ran a database initialization service to create all tables
+6. Started the web application once everything is ready
 
 ## Useful Commands
 
