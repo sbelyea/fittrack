@@ -43,7 +43,12 @@ def setup_tables():
     
     try:
         with app.app_context():
-            # Create all tables
+            # Drop existing tables to ensure clean schema (for development)
+            print("Dropping existing tables...")
+            db.drop_all()
+            
+            # Create all tables with current schema
+            print("Creating tables with updated schema...")
             db.create_all()
             print("Database tables created successfully")
             return True

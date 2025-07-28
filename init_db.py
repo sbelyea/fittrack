@@ -35,8 +35,17 @@ def create_tables():
     """Create all database tables"""
     try:
         with app.app_context():
+            # Check if tables exist and drop them if they do (for development)
+            # This ensures we always have the latest schema
+            print("Checking existing tables...")
+            
+            # Drop all tables first to ensure clean schema
+            db.drop_all()
+            print("Dropped existing tables")
+            
+            # Create all tables with current schema
             db.create_all()
-            print("Database tables created successfully!")
+            print("Database tables created successfully with updated schema!")
             return True
     except Exception as e:
         print(f"Error creating tables: {e}")
